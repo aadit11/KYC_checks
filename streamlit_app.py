@@ -3,9 +3,13 @@ import pytesseract
 from pdf2image import convert_from_bytes
 from PIL import Image
 import io
+import os
+from dotenv import load_dotenv
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-poppler_path = r"C:\Users\SAHIL\Downloads\Release-23.01.0-0\poppler-23.01.0\Library\bin"
+load_dotenv()
+pytesseract.pytesseract.tesseract_cmd = os.getenv(
+    'pytesseract.pytesseract.tesseract_cmd')
+poppler_path = os.getenv('poppler_path')
 
 st.subheader("Please upload a PDF or image file for text recognition!")
 
