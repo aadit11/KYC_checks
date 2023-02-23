@@ -5,7 +5,7 @@ from PIL import Image
 import io
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-poppler_path = r"C:\Users\SAHIL\Downloads\Release-23.01.0-0\poppler-23.01.0\Library\bin"
+poppler_path = r"C:\Users\hp\Downloads\Release-23.01.0-0\poppler-23.01.0\Library\bin"
 
 st.subheader("Please upload a PDF or image file for text recognition!")
 
