@@ -1,0 +1,3 @@
+poppler-utils
+python-poppler
+tesseract-ocr
