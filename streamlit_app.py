@@ -99,8 +99,8 @@ if uploaded_file:
         else:
 
             with io.BytesIO(uploaded_file.read()) as pdf_file:
-                images = convert_from_bytes(pdf_file.read(
-                ), poppler_path=poppler_path)
+                # images = convert_from_bytes(pdf_file.read(), poppler_path=poppler_path)
+                images = convert_from_bytes(pdf_file.read())
 
             for i, img in enumerate(images):
                 # st.image(img, caption=f'PDF page {i+1}')
