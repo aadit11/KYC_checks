@@ -9,9 +9,10 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
-pytesseract.pytesseract.tesseract_cmd = os.getenv(
-    'pytesseract.pytesseract.tesseract_cmd')
-poppler_path = os.getenv('poppler_path')
+# pytesseract.pytesseract.tesseract_cmd = os.getenv('pytesseract.pytesseract.tesseract_cmd')
+# poppler_path = os.getenv('poppler_path')
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
+# poppler_path = os.getenv('poppler_path')
 
 st.subheader("Please upload a PDF or image file for text recognition!")
 
