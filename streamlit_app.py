@@ -7,6 +7,9 @@ import io
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+import numpy as np
+import cv2
+import re
 
 load_dotenv()
 pytesseract.pytesseract.tesseract_cmd = os.getenv(
@@ -21,7 +24,7 @@ uploaded_file = st.file_uploader(
     "Choose a file", type=accepted_file_extensions)
 
 
-def generate_pdf(bank_line, account_name_line, account_no_line, address_line, branch_line, nomination_required_line, balance_line):
+def generate_bank_pdf(bank_line, account_name_line, account_no_line, address_line, branch_line, nomination_required_line, balance_line):
 
     pdf = FPDF()
     pdf.add_page()
@@ -44,50 +47,110 @@ def generate_pdf(bank_line, account_name_line, account_no_line, address_line, br
 
 
 def process_image(image):
-    # Set the configuration options for pytesseract
-    config = '--psm 6'
+    # Load the image using OpenCV
+    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-    # Get the recognized text with line breaks
-    text = pytesseract.image_to_string(image, config=config)
+    # Preprocess the image
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    _, threshold = cv2.threshold(
+        blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    # Pass the preprocessed image to Tesseract OCR engine
+    text = pytesseract.image_to_string(threshold)
+
+    if 'balance' in text.lower():
+        process_bank_statement(threshold)
+
+    if 'permanent account number' in text.lower():
+        process_pan(threshold)
+
+    else:
+        st.warning('Picture quality unclear!', icon="🚨")
+
+
+def process_bank_statement(threshold):
+    # Pass the preprocessed image to Tesseract OCR engine
+    text = pytesseract.image_to_string(threshold, config='--psm 6')
 
     # Split the text into lines and store them in a list
     lines = text.split('\n')
+    st.write(lines)
 
-    bank_line = ''
-    account_name_line = ''
-    account_no_line = ''
-    address_line = ''
-    address_line_start_idx = 0
-    address_line_end_idx = 0
-    branch_line = ''
-    nomination_required_line = ''
-    balance_line = ''
+    # Parse the extracted text to find the name and PAN card number using regular expressions
+    bank_names = ['ICICI', 'HDFC', 'SBI', 'State Bank of India',
+                  'Axis', 'Kotak', 'IDBI', 'PNB', 'BOB']
+    bank_pattern = re.compile(
+        r'\b(' + '|'.join(bank_names) + r')\b', re.IGNORECASE)
+    account_name_pattern = re.compile(
+        r'Account\s*Name\s*:?\s*([A-Z][a-z]*\.?\s+[A-Z](?:\s*[a-z]*\.?\s+)?[A-Z][a-z]*)', re.IGNORECASE)
+    account_number_pattern = re.compile(
+        r'Account\s*Number\s*:?\s*(\d{9,20})', re.IGNORECASE)
+    address_pattern = re.compile(
+        r'Address\s*:?\s*([\w\s\-\.,/#&]*\d{6})', re.IGNORECASE | re.DOTALL)
+    branch_pattern = re.compile(r'Branch\s*:?\s*(.*)', re.IGNORECASE)
+    nomination_pattern = re.compile(
+        r'(?i)\bnomination\b.*\b(yes|no)\b', re.IGNORECASE)
+    balance_pattern = re.compile(
+        r'\d{1,3}(?:,\d{3})*\.\d{2}', re.IGNORECASE)
 
-    # Print the lines
-    for i, line in enumerate(lines):
-        if line.lower().count('bank') > 0:
-            bank_line = line
-        if line.lower().count('account name') > 0:
-            account_name_line = line
-        if line.lower().count('account number') > 0:
-            account_no_line = line
-        if line.lower().count('address') > 0:
-            address_line_start_idx = i
-        if line.lower().count('account type') > 0:
-            address_line_end_idx = i
-        if line.lower().count('branch') > 0:
-            branch_line = line
-        if line.lower().count('nomination') > 0:
-            nomination_required_line = line
-        if balance_line == '' and line.lower().count('balance as on') > 0:
-            balance_line = line
-        # st.write(line)
+    # Search for matches using the regular expressions
+    bank_match = bank_pattern.search(text)
+    account_name_match = account_name_pattern.search(text)
+    account_number_match = account_number_pattern.search(text)
+    address_match = address_pattern.search(text)
+    branch_match = branch_pattern.search(text)
+    nomination_match = nomination_pattern.search(text)
+    balance_match = balance_pattern.findall(text)
 
-    address_line = lines[address_line_start_idx:address_line_end_idx]
-    address_line = ' '.join(address_line)
+    if bank_match:
+        bank = bank_match.group(1)
+    else:
+        bank = "Bank name not found"
 
-    generate_pdf(bank_line, account_name_line, account_no_line,
-                 address_line, branch_line, nomination_required_line, balance_line)
+    st.write("Bank:", bank)
+    st.write("Account Number:", account_number_match.group(1))
+    st.write("Account Name:", account_name_match.group(1))
+    st.write("Address:", address_match.group(1))
+    st.write("Branch:", branch_match.group(1))
+    st.write("Nomination:", nomination_match.group(1))
+    st.write("Balance:", balance_match[-1])
+
+
+def process_pan(threshold):
+    # Apply morphological operations
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    dilate = cv2.dilate(threshold, kernel, iterations=1)
+    erode = cv2.erode(dilate, kernel, iterations=1)
+
+    # Pass the preprocessed image to Tesseract OCR engine
+    text = pytesseract.image_to_string(erode)
+
+    # Split the text into lines and store them in a list
+    lines = text.split('\n')
+    st.write(lines)
+
+    # Parse the extracted text to find the name and PAN card number using regular expressions
+    name_pattern = re.compile(r'Name\s*:?\s*(\w+\s+\w+\s+\w+)', re.IGNORECASE)
+    pan_pattern = re.compile(
+        r'\s*:?\s*([A-Z]{5}\d{4}[A-Z])', re.IGNORECASE)
+
+    # Search for matches using the regular expressions
+    name_match = name_pattern.search(text)
+    pan_match = pan_pattern.search(text)
+
+    if name_match:
+        name = name_match.group(1)
+    else:
+        name = "Name not found"
+
+    if pan_match:
+        pan = pan_match.group(1)
+    else:
+        pan = "PAN not found"
+
+    st.write("Name:", name)
+    st.write("PAN card number:", pan)
 
 
 if uploaded_file:
