@@ -9,7 +9,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
-pytesseract.pytesseract.tesseract_cmd = os.getenv('pytesseract.pytesseract.tesseract_cmd')
+pytesseract.pytesseract.tesseract_cmd = os.getenv(
+    'pytesseract.pytesseract.tesseract_cmd')
 poppler_path = os.getenv('poppler_path')
 
 st.subheader("Please upload a PDF or image file for text recognition!")
@@ -26,10 +27,10 @@ def generate_pdf(bank_line, account_name_line, account_no_line, address_line, br
     pdf.add_page()
 
     # Add header image
-    pdf.image('C:\IntellectProject\Images\igtb.jpg', x=0, y=0, w=210)
-    
+    pdf.image('C:\IntellectProject\Images\header.jpg', x=0, y=0, w=210)
+
     # Add footer image
-    pdf.image('C:\IntellectProject\Images\igtb2.jpg', x=160, y=272, w=50)
+    pdf.image('C:\IntellectProject\Images\footer.jpg', x=160, y=272, w=50)
 
     pdf.set_font('Arial', 'B', 16)
     pdf.set_xy(50, 78)
