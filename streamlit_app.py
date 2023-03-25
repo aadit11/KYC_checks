@@ -9,10 +9,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
-# pytesseract.pytesseract.tesseract_cmd = os.getenv('pytesseract.pytesseract.tesseract_cmd')
-# poppler_path = os.getenv('poppler_path')
-pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
-# poppler_path = os.getenv('poppler_path')
+pytesseract.pytesseract.tesseract_cmd = os.getenv('pytesseract.pytesseract.tesseract_cmd')
+poppler_path = os.getenv('poppler_path')
 
 st.subheader("Please upload a PDF or image file for text recognition!")
 
@@ -27,7 +25,14 @@ def generate_pdf(bank_line, account_name_line, account_no_line, address_line, br
     pdf = FPDF()
     pdf.add_page()
 
+    # Add header image
+    pdf.image('C:\IntellectProject\Images\igtb.jpg', x=0, y=0, w=210)
+    
+    # Add footer image
+    pdf.image('C:\IntellectProject\Images\igtb2.jpg', x=160, y=272, w=50)
+
     pdf.set_font('Arial', 'B', 16)
+    pdf.set_xy(50, 78)
     pdf.multi_cell(0, 10, bank_line + "\n" + account_name_line + "\n" + account_no_line + "\n" +
                    address_line + "\n" + branch_line + "\n" + nomination_required_line + "\n" + balance_line)
 
@@ -105,12 +110,3 @@ if uploaded_file:
             for i, img in enumerate(images):
                 # st.image(img, caption=f'PDF page {i+1}')
                 process_image(img)
-
-# SBI
-# bank name
-# account name
-# account no
-# address
-# branch
-# nomination registered - y/n
-# balance
