@@ -62,8 +62,11 @@ def process_image(image):
     if 'balance' in text.lower():
         process_bank_statement(threshold)
 
-    if 'permanent account number' in text.lower():
+    elif 'permanent account number' in text.lower():
         process_pan(threshold)
+
+    elif 'passport number' in text.lower():
+        process_passport(threshold)
 
     else:
         st.warning('Picture quality unclear!', icon="🚨")
@@ -131,13 +134,22 @@ def process_pan(threshold):
     st.write(lines)
 
     # Parse the extracted text to find the name and PAN card number using regular expressions
-    name_pattern = re.compile(r'Name\s*:?\s*(\w+\s+\w+\s+\w+)', re.IGNORECASE)
+    name_pattern = re.compile(
+        r'Name\s*:?\s*(\w+\s+\w+\s+\w+)', re.IGNORECASE)
     pan_pattern = re.compile(
         r'\s*:?\s*([A-Z]{5}\d{4}[A-Z])', re.IGNORECASE)
+    fname_pattern = re.compile(
+        r"Father's\s+Name\s*:?\s*(\w+\s+\w+\s+\w+)", re.IGNORECASE)
+    dob_pattern = re.compile(
+        r"Date\s+of\s+Birth\s+\n(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
+
+
 
     # Search for matches using the regular expressions
     name_match = name_pattern.search(text)
     pan_match = pan_pattern.search(text)
+    fname_match = fname_pattern.search(text) 
+    dob_match = dob_pattern.search(text)
 
     if name_match:
         name = name_match.group(1)
@@ -149,9 +161,158 @@ def process_pan(threshold):
     else:
         pan = "PAN not found"
 
+    if fname_match:
+        fname = fname_match.group(1)
+    else:
+        fname = "Father's name not found"
+
+    if dob_match:
+        dob = dob_match.group(1)
+    else:
+        dob = "Date of birth not found"
+
+
+
     st.write("Name:", name)
+    st.write("Father's name:", fname)
+    st.write("Date of Birth:", dob)
     st.write("PAN card number:", pan)
 
+
+
+def process_passport(threshold):
+     # Apply morphological operations
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    dilate = cv2.dilate(threshold, kernel, iterations=1)
+    erode = cv2.erode(dilate, kernel, iterations=1)
+
+    # Pass the preprocessed image to Tesseract OCR engine
+    text = pytesseract.image_to_string(erode)
+
+    # Split the text into lines and store them in a list
+    lines = text.split('\n')
+    st.write(lines)
+
+    
+    # Parse the extracted text to find the name and PAN card number using regular expressions
+    passportno_pattern = re.compile(
+        r"Passport\s+No\.\s+(\w\d{7})", re.IGNORECASE)
+    surname_pattern = re.compile(
+        r"Surname\s+(\w+)", re.IGNORECASE)
+    name_pattern = re.compile(
+        r"Given\s+Name\(s\)\s+(\w+)", re.IGNORECASE)
+    sex_pattern = re.compile(
+        r"Sex\s+(\w)", re.IGNORECASE)
+    dob_pattern = re.compile(
+        r"Date\s+of\s+Birth\s+(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
+    pob_pattern = re.compile(
+        r"Place\s+of\s+Birth\s+([\w\s,]+)", re.IGNORECASE)
+    poi_pattern = re.compile(
+        r"Place\s+of\s+Issue\s+([\w\s]+)", re.IGNORECASE)
+    doi_pattern = re.compile(
+        r"Date\s+of\s+Issue\s+(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
+    doe_pattern = re.compile(
+        r"Date\s+of\s+Expiry\s+(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
+    nof_pattern = re.compile(
+        r"Name\s+of\s+Father\s+([\w\s]+)", re.IGNORECASE)
+    nom_pattern = re.compile(
+        r"Name\s+of\s+Mother\s+([\w\s]+)", re.IGNORECASE)
+    address_pattern = re.compile(
+        r"Address\s*((?:.+\n)+?.*INDIA)", re.IGNORECASE)
+
+
+
+    # Search for matches using the regular expressions
+    passportno_match = passportno_pattern.search(text)
+    surname_match = surname_pattern.search(text)
+    name_match = name_pattern.search(text)
+    sex_match = sex_pattern.search(text)
+    dob_match = dob_pattern.search(text)
+    pob_match = pob_pattern.search(text)
+    poi_match = poi_pattern.search(text)
+    doi_match = doi_pattern.search(text)
+    doe_match = doe_pattern.search(text)
+    nof_match = nof_pattern.search(text)
+    nom_match = nom_pattern.search(text)
+    address_match = address_pattern.search(text)
+
+
+
+
+
+    if passportno_match:
+        passportno = passportno_match.group(1)
+    else:
+        passportno = "Passport number not found"
+    
+    if surname_match:
+        surname = surname_match.group(1)
+    else:
+        surname = "Surname not found"
+
+    if name_match:
+        name = name_match.group(1)
+    else:
+        name = "Name not found"
+
+    if sex_match:
+        sex = sex_match.group(1)
+    else:
+        sex = "Sex not found"
+
+    if dob_match:
+        dob = dob_match.group(1)
+    else:
+        dob = "Date of birth not found"
+
+    if pob_match:
+        pob = pob_match.group(1)
+    else:
+        pob = "Place of birth not found"
+
+    if poi_match:
+        poi = poi_match.group(1)
+    else:
+        poi = "Place of issue not found"
+
+    if doi_match:
+        doi = doi_match.group(1)
+    else:
+        poi = "Date of issue not found"
+
+    if doe_match:
+        doe = doe_match.group(1)
+    else:
+        doe = "Date of Expiry not found"
+
+    if nof_match:
+        nof = nof_match.group(1)
+    else:
+        nof = "Name of Father not found"
+
+    if nom_match:
+        nom = nom_match.group(1)
+    else:
+        nom = "Name of Mother not found"
+
+    if address_match:
+        address = address_match.group(1)
+    else:
+        address = "Address not found"
+    
+
+    st.write("Passport number:", passportno)
+    st.write("Surname:", surname)
+    st.write("Name:", name)
+    st.write("Sex:", sex)
+    st.write("Date of Birth:", dob)
+    st.write("Place of Birth:", pob)
+    st.write("Place of issue:", poi)
+    st.write("Date of issue:", doi)
+    st.write("Date of Expiry:", doe)
+    st.write("Name of Father:", nof)
+    st.write("Name of Mother:", nom)
+    st.write("Address:", address)
 
 if uploaded_file:
 
@@ -168,8 +329,8 @@ if uploaded_file:
         else:
 
             with io.BytesIO(uploaded_file.read()) as pdf_file:
-                # images = convert_from_bytes(pdf_file.read(), poppler_path=poppler_path)
-                images = convert_from_bytes(pdf_file.read())
+                images = convert_from_bytes(pdf_file.read(), poppler_path=poppler_path)
+                #images = convert_from_bytes(pdf_file.read())
 
             for i, img in enumerate(images):
                 # st.image(img, caption=f'PDF page {i+1}')
