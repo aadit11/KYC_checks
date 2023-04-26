@@ -5,5 +5,4 @@ pytesseract
 python-dotenv
 streamlit
 opencv-python-headless
-re
 numpy
