@@ -69,9 +69,6 @@ def process_image(image):
     elif 'passport' in text.lower():
         process_passport(threshold)
 
-    elif 'licence' in text.lower():
-        process_license(threshold)
-
     else:
         st.warning('Picture quality unclear!', icon="🚨")
 
