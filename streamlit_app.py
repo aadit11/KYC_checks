@@ -16,7 +16,7 @@ pytesseract.pytesseract.tesseract_cmd = os.getenv(
     'pytesseract.pytesseract.tesseract_cmd')
 poppler_path = os.getenv('poppler_path')
 
-st.subheader("Please upload a PDF or image file for text recognition!")
+st.subheader("Please upload a PDF or image file for text recognition, Make sure the image is clear!")
 
 accepted_file_extensions = ['pdf', 'png', 'jpg', 'jpeg']
 
@@ -69,6 +69,9 @@ def process_image(image):
     elif 'passport' in text.lower():
         process_passport(threshold)
 
+    elif 'licence' in text.lower():
+        process_license(threshold)
+
     else:
         st.warning('Picture quality unclear!', icon="🚨")
 
@@ -81,7 +84,7 @@ def process_bank_statement(threshold):
     lines = text.split('\n')
     # st.write(lines)
 
-    # Parse the extracted text to find the name and PAN card number using regular expressions
+    # Parse the extracted text to find the parameters susing regular expressions
     bank_names = ['ICICI', 'HDFC', 'SBI', 'State Bank of India',
                   'Axis', 'Kotak', 'IDBI', 'PNB', 'BOB']
     bank_pattern = re.compile(
@@ -145,14 +148,6 @@ def process_bank_statement(threshold):
     generate_pdf({"Bank": bank, "Account Name": account_name, "Account Number": account_number,
                  "Address": address, "Branch": branch, "Nomination": nomination, "Balance": balance})
 
-    # st.write("Bank:", bank)
-    # st.write("Account Name:", account_name)
-    # st.write("Account Number:", account_number)
-    # st.write("Address:", address)
-    # st.write("Branch:", branch)
-    # st.write("Nomination:", nomination)
-    # st.write("Balance:", balance)
-
 
 def process_pan(threshold):
     # Apply morphological operations
@@ -167,7 +162,7 @@ def process_pan(threshold):
     lines = text.split('\n')
     # st.write(lines)
 
-    # Parse the extracted text to find the name and PAN card number using regular expressions
+    # Parse the extracted text to find the parameters using regular expressions
     name_pattern = re.compile(
         r'Name\s*:?\s*(\w+\s+\w+\s+\w+)', re.IGNORECASE)
     pan_pattern = re.compile(
@@ -206,11 +201,6 @@ def process_pan(threshold):
     generate_pdf({"Name": name, "Father's name": fname,
                  "Date of Birth": dob, "PAN card number": pan})
 
-    # st.write("Name:", name)
-    # st.write("Father's name:", fname)
-    # st.write("Date of Birth:", dob)
-    # st.write("PAN card number:", pan)
-
 
 def process_passport(threshold):
     # Apply morphological operations
@@ -223,9 +213,9 @@ def process_passport(threshold):
 
     # Split the text into lines and store them in a list
     lines = text.split('\n')
-    st.write(lines)
+    #st.write(lines)
 
-    # Parse the extracted text to find the name and PAN card number using regular expressions
+    # Parse the extracted text to find the parameters using regular expressions
     passportno_pattern = re.compile(
         r"Passport\s+No\.\s+(\w\d{7})", re.IGNORECASE)
     surname_pattern = re.compile(
@@ -239,7 +229,7 @@ def process_passport(threshold):
     pob_pattern = re.compile(
         r"Place\s+of\s+Birth\s+([\w\s,]+)", re.IGNORECASE)
     poi_pattern = re.compile(
-        r"Place\s+of\s+Issue\s+([\w\s]+)", re.IGNORECASE)
+        r"Place\s+of\s+Issue\s+([A-Z\s]+)", re.IGNORECASE)
     doi_pattern = re.compile(
         r"Date\s+of\s+Issue\s+(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
     doe_pattern = re.compile(
@@ -325,18 +315,11 @@ def process_passport(threshold):
     else:
         address = "Not found!"
 
-    st.write("Passport number:", passportno)
-    st.write("Surname:", surname)
-    st.write("Name:", name)
-    st.write("Sex:", sex)
-    st.write("Date of Birth:", dob)
-    st.write("Place of Birth:", pob)
-    st.write("Place of issue:", poi)
-    st.write("Date of issue:", doi)
-    st.write("Date of Expiry:", doe)
-    st.write("Name of Father:", nof)
-    st.write("Name of Mother:", nom)
-    st.write("Address:", address)
+    generate_pdf({"Passport Number": passportno, "Surname": surname, "Name": name,
+                 "Sex": sex, "Date Of Birth": dob, "Place Of Birth": pob, "Place Of Issue": poi,
+                 "Date Of Issue": doi, "Date Of Expiry": doe, "Name Of Father": nof, "Name Of Mother": nom,
+                 "Address": address})
+
 
 
 if uploaded_file:
