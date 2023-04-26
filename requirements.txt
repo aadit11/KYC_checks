@@ -4,3 +4,6 @@ Pillow
 pytesseract
 python-dotenv
 streamlit
+cv2
+re
+numpy
