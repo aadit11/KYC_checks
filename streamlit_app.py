@@ -11,10 +11,10 @@ import numpy as np
 import cv2
 import re
 
-#load_dotenv()
-#pytesseract.pytesseract.tesseract_cmd = os.getenv(
-#    'pytesseract.pytesseract.tesseract_cmd')
-#poppler_path = os.getenv('poppler_path')
+load_dotenv()
+pytesseract.pytesseract.tesseract_cmd = os.getenv(
+    'pytesseract.pytesseract.tesseract_cmd')
+poppler_path = os.getenv('poppler_path')
 
 st.subheader("Please upload a PDF or image file for text recognition, Make sure the image is clear!")
 
