@@ -16,7 +16,7 @@ pytesseract.pytesseract.tesseract_cmd = os.getenv(
     'pytesseract.pytesseract.tesseract_cmd')
 poppler_path = os.getenv('poppler_path')
 
-st.subheader("Please upload a PDF or image file for text recognition, Make sure the image is clear!")
+st.subheader("Please upload a PDF or image file for KYC check, Make sure the image is clear!")
 
 accepted_file_extensions = ['pdf', 'png', 'jpg', 'jpeg']
 
