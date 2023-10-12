@@ -16,7 +16,7 @@ pytesseract.pytesseract.tesseract_cmd = os.getenv(
     'pytesseract.pytesseract.tesseract_cmd')
 poppler_path = os.getenv('poppler_path')
 
-st.subheader("Please upload a PDF or image file for text recognition!")
+st.subheader("Please upload a PDF or image file for KYC check, Make sure the image is clear!")
 
 accepted_file_extensions = ['pdf', 'png', 'jpg', 'jpeg']
 
@@ -24,23 +24,24 @@ uploaded_file = st.file_uploader(
     "Choose a file", type=accepted_file_extensions)
 
 
-def generate_bank_pdf(bank_line, account_name_line, account_no_line, address_line, branch_line, nomination_required_line, balance_line):
+def generate_pdf(info):
 
     pdf = FPDF()
     pdf.add_page()
 
     # Add header image
-    pdf.image('C:\IntellectProject\Images\header.jpg', x=0, y=0, w=210)
+    pdf.image(r'images\header.jpg', x=0, y=0, w=210)
 
     # Add footer image
-    pdf.image('C:\IntellectProject\Images\footer.jpg', x=160, y=272, w=50)
+    pdf.image(r'images\footer.jpg', x=160, y=272, w=50)
 
     pdf.set_font('Arial', 'B', 16)
-    pdf.set_xy(50, 78)
-    pdf.multi_cell(0, 10, bank_line + "\n" + account_name_line + "\n" + account_no_line + "\n" +
-                   address_line + "\n" + branch_line + "\n" + nomination_required_line + "\n" + balance_line)
 
-    filename = "bank_statement"+datetime.now().strftime("%d-%m-%Y,%H:%M:%S")+".pdf"
+    pdf.set_xy(0, 60)
+    for key, value in info.items():
+        pdf.cell(0, 10, txt=key + ": " + value, ln=1, align="C")
+
+    filename = "report/"+datetime.now().strftime("%d-%m-%Y,%H-%M-%S")+".pdf"
     st.download_button("Download Report", data=pdf.output(
         dest='S').encode('latin-1'), file_name=filename)
     st.success('Report generated successfully!', icon="✅")
@@ -62,8 +63,11 @@ def process_image(image):
     if 'balance' in text.lower():
         process_bank_statement(threshold)
 
-    if 'permanent account number' in text.lower():
+    elif 'permanent account number' in text.lower():
         process_pan(threshold)
+
+    elif 'drive' in text.lower():
+        process_licence(threshold)
 
     else:
         st.warning('Picture quality unclear!', icon="🚨")
@@ -75,9 +79,9 @@ def process_bank_statement(threshold):
 
     # Split the text into lines and store them in a list
     lines = text.split('\n')
-    st.write(lines)
+    # st.write(lines)
 
-    # Parse the extracted text to find the name and PAN card number using regular expressions
+    # Parse the extracted text to find the parameters susing regular expressions
     bank_names = ['ICICI', 'HDFC', 'SBI', 'State Bank of India',
                   'Axis', 'Kotak', 'IDBI', 'PNB', 'BOB']
     bank_pattern = re.compile(
@@ -106,15 +110,40 @@ def process_bank_statement(threshold):
     if bank_match:
         bank = bank_match.group(1)
     else:
-        bank = "Bank name not found"
+        bank = "Not found!"
 
-    st.write("Bank:", bank)
-    st.write("Account Number:", account_number_match.group(1))
-    st.write("Account Name:", account_name_match.group(1))
-    st.write("Address:", address_match.group(1))
-    st.write("Branch:", branch_match.group(1))
-    st.write("Nomination:", nomination_match.group(1))
-    st.write("Balance:", balance_match[-1])
+    if account_name_match:
+        account_name = account_name_match.group(1)
+    else:
+        account_name = "Not found!"
+
+    if account_number_match:
+        account_number = account_number_match.group(1)
+    else:
+        account_number = "Not found!"
+
+    if address_match:
+        address = address_match.group(1)
+    else:
+        address = "Not found!"
+
+    if branch_match:
+        branch = branch_match.group(1)
+    else:
+        branch = "Not found!"
+
+    if nomination_match:
+        nomination = nomination_match.group(1)
+    else:
+        nomination = "Not found!"
+
+    if balance_match:
+        balance = balance_match[-1]
+    else:
+        balance = "Not found!"
+
+    generate_pdf({"Bank": bank, "Account Name": account_name, "Account Number": account_number,
+                 "Address": address, "Branch": branch, "Nomination": nomination, "Balance": balance})
 
 
 def process_pan(threshold):
@@ -128,29 +157,64 @@ def process_pan(threshold):
 
     # Split the text into lines and store them in a list
     lines = text.split('\n')
-    st.write(lines)
+    # st.write(lines)
 
-    # Parse the extracted text to find the name and PAN card number using regular expressions
-    name_pattern = re.compile(r'Name\s*:?\s*(\w+\s+\w+\s+\w+)', re.IGNORECASE)
+    # Parse the extracted text to find the parameters using regular expressions
+    name_pattern = re.compile(
+        r'Name\s*:?\s*(\w+\s+\w+\s+\w+)', re.IGNORECASE)
     pan_pattern = re.compile(
         r'\s*:?\s*([A-Z]{5}\d{4}[A-Z])', re.IGNORECASE)
+    
 
     # Search for matches using the regular expressions
     name_match = name_pattern.search(text)
     pan_match = pan_pattern.search(text)
+    
 
     if name_match:
         name = name_match.group(1)
     else:
-        name = "Name not found"
+        name = "Not found!"
 
     if pan_match:
         pan = pan_match.group(1)
     else:
-        pan = "PAN not found"
+        pan = "Not found!"
 
-    st.write("Name:", name)
-    st.write("PAN card number:", pan)
+    generate_pdf({"Name": name, "PAN card number": pan})
+    
+
+def process_licence(threshold):
+     # Pass the preprocessed image to Tesseract OCR engine
+    text = pytesseract.image_to_string(threshold, config='--psm 6')
+
+    # Split the text into lines and store them in a list
+    lines = text.split('\n')
+    #st.write(lines)
+
+    # Parse the extracted text to find the parameters using regular expressions
+    name_pattern = re.compile(
+        r'Name\s*:?\s*([A-Z]+\s+[A-Z]+)[^\r\n]*', re.IGNORECASE)
+    licenceno_pattern = re.compile(
+       r"License No\. : [A-Z]{2}\d{2}\s\d{11}", re.IGNORECASE)
+   
+
+    name_match = name_pattern.search(text)
+    licenceno_match = licenceno_pattern.search(text)
+    
+
+    if name_match:
+        name = name_match.group(1)
+    else:
+        name = "Not found!"
+
+    if licenceno_match:
+        licence = licenceno_match.group()
+    else:
+        licence = "Not found!"
+
+
+    generate_pdf({"Name": name, "": licence})
 
 
 if uploaded_file:
@@ -168,8 +232,9 @@ if uploaded_file:
         else:
 
             with io.BytesIO(uploaded_file.read()) as pdf_file:
-                # images = convert_from_bytes(pdf_file.read(), poppler_path=poppler_path)
-                images = convert_from_bytes(pdf_file.read())
+                images = convert_from_bytes(
+                pdf_file.read(), poppler_path=poppler_path)
+                #images = convert_from_bytes(pdf_file.read())
 
             for i, img in enumerate(images):
                 # st.image(img, caption=f'PDF page {i+1}')

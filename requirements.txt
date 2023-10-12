@@ -4,3 +4,5 @@ Pillow
 pytesseract
 python-dotenv
 streamlit
+opencv-python-headless
+numpy
